@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rate Management PRO MAX</title>
+<script>
+    // اگر لاگ ان نہیں کیا تو واپس لاگ ان پیج پر بھیج دو
+    if (!sessionStorage.getItem('userAuth')) {
+        window.location.href = 'index.html';
+    }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body {font-family:Jameel Noori Nastaleeq; background:#f0f2f5; margin:0; padding:15px;}
+/* Header Main Section */
+header {
+    background: #1a1a1a;
+    color: #ffd700;
+    padding: 20px;
+    text-align: center;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    margin-bottom: 20px;
+}
+
+/* Inputs & Selects Styling */
+header input, header select {
+    padding: 5px;
+    margin: 3px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    font-family: 'Jameel Noori Nastaleeq', Arial;
+    font-size: 20px;
+    outline: none;
+    background: #fff;
+    transition: 0.3s;
+}
+
+header input:focus {
+    border-color: #ffd700;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
+}
+
+/* Specific Styling for + Factory and + Item Buttons */
+header button:not(.btn) {
+    background: #ffd700;
+    color: #000;
+    font-weight: bold;
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+header button:not(.btn):hover {
+    background: #ffea00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
+}
+
+header button:not(.btn):active {
+    transform: translateY(0);
+}
+
+/* Bottom Action Buttons (Save, Image, etc.) */
+.btn {
+    padding: 10px 18px;
+    margin: 5px;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: 0.3s;
+    font-size: 13px;
+}
+
+.btn-save { background: #28a745; color: #fff; }
+.btn-blue { background: #17a2b8; color: #fff; }
+.btn-red { background: #dc3545; color: #fff; padding: 5px 10px; }
+
+/* Grid & Cards */
+.factory-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.factory-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 12px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* بہتر فیکٹری ہیڈر اسٹائل */
+.factory-header {
+    display: flex;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%); /* گریڈیئنٹ بیک گراؤنڈ */
+    color: #ffd700;
+    padding: 10px 15px;
+    align-items: center;
+    border-radius: 8px 8px 0 0; /* صرف اوپر کے کونے گول */
+    margin-bottom: 10px;
+    border-bottom: 2px solid #ffd700; /* نیچے سنہری پٹی */
+}
+
+/* ہیڈر کے اندر موجود ان پٹ (فیکٹری نام) کا اسٹائل */
+.factory-header input[type="text"] {
+    background: transparent;
+    border: 1px dashed rgba(255, 215, 0, 0.3);
+    color: #ffd700;
+    font-family: 'Jameel Noori Nastaleeq', serif;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    width: 60%;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.factory-header input[type="text"]:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #ffd700;
+    outline: none;
+    border-radius: 4px;
+}
+
+/* چیک باکس کا سائز بڑا کرنے کے لیے */
+.factory-header input[type="checkbox"] {
+    transform: scale(1.3);
+    cursor: pointer;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .factory-grid { grid-template-columns: 1fr; }
+    header input, header select, header button:not(.btn), .btn {
+        width: 95%;
+        display: block;
+        margin: 8px auto;
+    }
+}
+.item-row{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:8px;
+padding:6px 8px;
+background:#f9f9f9;
+border:1px solid #ddd;
+border-radius:8px;
+margin-bottom:5px;
+box-shadow:0 1px 3px rgba(0,0,0,0.08);
+transition:0.2s;
+}
+
+.item-row:hover{background:#eef7ff; transform:scale(1.01);}
+/* آئٹم کے نام کا ٹیکسٹ سائز بڑھانے کے لیے */
+.item-row span {
+    flex: 1; 
+    text-align: right; 
+    font-size: 22px; /* یہاں سے سائز بڑھایا گیا ہے */
+    font-weight: bold;
+}
+
+/* ان پٹ باکس (ریٹ) کا ٹیکسٹ سائز اور ڈیزائن */
+.item-row input {
+    width: 100px; 
+    height: 40px; 
+    font-size: 24px; /* ریٹ کا سائز مزید واضح کیا گیا ہے */
+    font-weight: bold; 
+    border: 2px solid #ccc; 
+    border-radius: 6px; 
+    background: #fff; 
+    text-align: center;
+}
+
+.rate-low{background:#ffcccc; border-color:red;}
+.rate-high{background:#ccffcc; border-color:green;}
+
+#captureArea{display:inline-block; padding:0; margin:0; background:transparent; width:fit-content; height:auto; display:none;}
+</style>
+</head>
+<body>
+
+<header>
+    <h2>🏭 Rate Management PRO MAX</h2>
+    
+    <div class="input-row">
+        <input type="date" id="entryDate">
+        <select id="dateSelector" onchange="loadOldData()"></select>
+        
+        <input type="text" id="newFactoryName" placeholder="New Factory">
+        <button onclick="addFactory()">+ Factory</button>
+        
+        <select id="factorySelect"></select>
+        <input type="text" id="newItemName" placeholder="Item Name">
+        <input type="number" id="newItemRate" placeholder="Rate">
+        <button onclick="addItem()">+ Item</button>
+    </div>
+
+    <div class="button-bank">
+        <button class="btn btn-save" onclick="saveData()">Save & Backup</button>
+        <button class="btn btn-blue" onclick="exportSelected()">Image</button>
+        <button class="btn btn-blue" onclick="downloadPDF()">PDF</button>
+        <button class="btn btn-blue" onclick="printData()">Print</button>
+        <button class="btn btn-blue" onclick="shareWhatsApp()">WhatsApp</button>
+        
+    </div>
+</header>
+
+<div class="factory-grid" id="grid"></div>
+<div id="captureArea"></div>
+
+<script>
+// 1. Google Web App URL yahan paste karen
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyd4zH4aO8llFFkxcL6O2a0sRB7zA7YthqPpllaQmCeiIhUo7bpqasVrmbLbmAa9r7k/exec";
+
+const defaultFactories = ["مورو", "نوریا آباد", "پاکی ٹیکس", "کشمیر بورڈچنیوٹ", "کشمیر بورڈ فاضل اڈا", "بائوماس"];
+const defaultItems = ["کھگل نارمل", "کھگل کریٹ", "کھگل", "لئی بلوچستان", "لئی جوہی", "پلو-جال بلوچستان", "پلو-جال جوہی", "آم", "سفیدہ پنجاب", "سفیدہ ٹنڈوآدم", "سمبل", "ووڈ چپس", "کنڈی", "کیکر", "دیوی", "کala-بلیک سفیدہ", "شریں", "کھگل", "سفیدہ"];
+
+let fullDB = JSON.parse(localStorage.getItem("rateDB")) || {};
+let db = [];
+
+async function init() {
+    const auth = sessionStorage.getItem('userAuth');
+    
+    if (auth === 'view') {
+        // Sirf data save karne aur naye item/factory add karne wale buttons chhupayein
+        document.querySelector('.btn-save').style.display = 'none';
+        
+        // Nayi factory aur naya item add karne wala section chhupayein
+        // Lekin date selector aur entryDate ko mat chhupayein taky filter kaam kare
+        const inputRow = document.querySelector('.input-row');
+        inputRow.querySelectorAll('button').forEach(btn => btn.style.display = 'none');
+        inputRow.querySelectorAll('input[type="text"], input[type="number"]').forEach(inp => inp.style.display = 'none');
+    }
+
+    let today = new Date().toISOString().split('T')[0];
+    entryDate.value = today;
+    loadDates();
+    loadData();
+    
+    // Cloud Sync logic (agar aap use kar rahe hain)
+    try {
+        let response = await fetch(GOOGLE_SCRIPT_URL);
+        let cloudData = await response.json();
+        if (cloudData && Object.keys(cloudData).length > 0) {
+            fullDB = cloudData;
+            localStorage.setItem("rateDB", JSON.stringify(fullDB));
+            loadDates();
+            loadData();
+        }
+    } catch (e) { console.log("Cloud offline."); }
+}
+
+function getDate() { return entryDate.value; }
+
+function loadData() {
+    let d = getDate();
+    if (fullDB[d]) {
+        db = fullDB[d];
+    } else {
+        db = defaultFactories.map(f => ({
+            name: f,
+            items: defaultItems.map(i => ({ name: i, rate: 0 }))
+        }));
+    }
+    render();
+}
+
+function render() {
+    const auth = sessionStorage.getItem('userAuth');
+    const isReadOnly = (auth === 'view') ? 'disabled' : '';
+
+    grid.innerHTML = "";
+    factorySelect.innerHTML = "";
+    db.forEach((f, fi) => {
+        factorySelect.innerHTML += `<option value="${fi}">${f.name}</option>`;
+        let card = document.createElement("div");
+        card.className = "factory-card";
+        
+        // Viewer ke liye delete button aur factory name editing band
+        card.innerHTML = `
+            <div class="factory-header" style="background: #1a1a1a; padding: 10px; border-bottom: 2px solid #ffd700;">
+                <input type="checkbox" id="chk-${fi}" style="transform: scale(1.3);">
+                
+                <input ${isReadOnly} value="${f.name}" 
+                       onchange="editFactory(${fi},this.value)" 
+                       style="background: transparent; border: 1px solid #ffd700; color: #ffd700; font-size: 25px; width: 60%; text-align: center;">
+
+                ${auth === 'full' ? `<button class="btn-red" onclick="deleteFactory(${fi})">X</button>` : ''}
+            </div>
+            ${f.items.map((it, ii) => `
+            <div class="item-row">
+                <span>${it.name}</span>
+                <input ${isReadOnly} class="${it.rate == 0 ? 'rate-low' : 'rate-high'}" 
+                       type="number" value="${it.rate}" 
+                       onchange="updateRate(${fi},${ii},this.value)">
+                ${auth === 'full' ? `<button onclick="deleteItem(${fi},${ii})">❌</button>` : ''}
+            </div>`).join("")}`;
+        grid.appendChild(card);
+    });
+}
+
+function addFactory() { if (newFactoryName.value) { db.push({ name: newFactoryName.value, items: [] }); newFactoryName.value = ""; render(); } }
+function addItem() { let fi = factorySelect.value; if (newItemName.value) { db[fi].items.push({ name: newItemName.value, rate: parseInt(newItemRate.value) || 0 }); newItemName.value = ""; newItemRate.value = ""; render(); } }
+function deleteFactory(i) { db.splice(i, 1); render(); }
+function deleteItem(fi, ii) { db[fi].items.splice(ii, 1); render(); }
+function updateRate(fi, ii, val) { db[fi].items[ii].rate = parseInt(val) || 0; render(); }
+function editFactory(i, val) { db[i].name = val; }
+
+async function saveData() {
+    fullDB[getDate()] = db;
+    localStorage.setItem("rateDB", JSON.stringify(fullDB));
+    try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fullDB)
+        });
+        alert("Data Saved & Backed up to Google Sheets!");
+    } catch (error) { alert("Local save success, backup failed."); }
+    loadDates();
+}
+
+function loadDates() {
+    dateSelector.innerHTML = "";
+    Object.keys(fullDB).forEach(d => { dateSelector.innerHTML += `<option>${d}</option>`; });
+}
+
+function loadOldData() { entryDate.value = dateSelector.value; loadData(); }
+
+// ===== EXPORT & PRINT FUNCTIONS =====
+function generateSelectedHTML() {
+    let selected = db.filter((f, fi) => {
+        let chk = document.getElementById(`chk-${fi}`);
+        return chk && chk.checked;
+    });
+    if (selected.length === 0) return "<h3>No Factory Selected</h3>";
+
+    // درست ترتیب: Days-Month-Year (20-Apr-2026)
+    let d = new Date(getDate());
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    let day = String(d.getDate()).padStart(2, '0'); // دن (پہلے)
+    let month = months[d.getMonth()];             // مہینہ (درمیان)
+    let year = d.getFullYear();                   // سال (آخر میں)
+    let formattedDate = `${day}-${month}-${year}`;
+
+    let html = `<style>
+        .print-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 10px; font-family: Jameel Noori Nastaleeq; }
+        .print-box { width: 220px; border: 1.5px solid #000; border-radius: 8px; overflow: hidden; background: #fff; margin-bottom: 5px; }
+        .print-box h3 { margin: 0; padding: 4px; background: #000; color: #ffd700; text-align: center; font-size: 18px; }
+        .print-box table { width: 100%; border-collapse: collapse; }
+        .print-box td { border-bottom: 1px solid #eee; padding: 4px 8px; text-align: right; font-size: 16px; }
+        .rate { font-weight: bold; text-align: center !important; font-size: 18px; }
+        
+        .logo-header { text-align: center; font-weight: bold; margin: 0; padding: 0; line-height: 1; }
+        .main-title { font-size: 32px; margin: 0; padding: 0; }
+        .sub-title { font-size: 18px; margin: 0; padding: 0; color: #444; }
+        .date-line { font-size: 16px; margin: 5px 0 10px 0; padding: 0; font-family: Arial, sans-serif; }
+    </style>
+    
+    <div class="logo-header">
+        <div class="main-title">🏭 چوہدری عبدالستار</div>
+        <div class="sub-title">(ریٹ لسٹ)</div>
+        <div class="date-line">${formattedDate}</div>
+    </div>
+    
+    <div class="print-grid">`;
+
+    selected.forEach(f => {
+        html += `<div class='print-box'><h3>${f.name}</h3><table>`;
+        f.items.forEach(i => {
+            html += `<tr><td>${i.name}</td><td class="rate">${i.rate}</td></tr>`;
+        });
+        html += `</table></div>`;
+    });
+    html += `</div>`;
+    return html;
+}
+
+function exportSelected() {
+    let area = document.getElementById("captureArea");
+    area.style.display = "block";
+    area.innerHTML = generateSelectedHTML();
+    setTimeout(() => {
+        html2canvas(area, { scale: 2 }).then(canvas => {
+            let a = document.createElement("a");
+            a.href = canvas.toDataURL("image/png");
+            a.download = `Rates_${getDate()}.png`;
+            a.click();
+            area.style.display = "none";
+        });
+    }, 500);
+}
+
+function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    let area = document.getElementById("captureArea");
+    area.style.display = "block";
+    area.innerHTML = generateSelectedHTML();
+    setTimeout(() => {
+        html2canvas(area, { scale: 2 }).then(canvas => {
+            let imgData = canvas.toDataURL('image/png');
+            let pdf = new jsPDF('p', 'mm', 'a4');
+            let width = pdf.internal.pageSize.getWidth();
+            let height = (canvas.height * width) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+            pdf.save(`Rates_${getDate()}.pdf`);
+            area.style.display = "none";
+        });
+    }, 500);
+}
+
+function printData() {
+    let w = window.open("");
+    w.document.write(generateSelectedHTML());
+    setTimeout(() => { w.print(); w.close(); }, 500);
+}
+
+async function shareWhatsApp() {
+    let area = document.getElementById("captureArea");
+    area.style.display = "block";
+    area.innerHTML = generateSelectedHTML(); // یہ وہی ڈیزائن ہے جو پرنٹ آؤٹ میں استعمال ہوتا ہے
+
+    setTimeout(async () => {
+        const canvas = await html2canvas(area, { scale: 2 });
+        area.style.display = "none";
+        
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const file = new File([blob], `Rates_${getDate()}.png`, { type: 'image/png' });
+
+        // چیک کریں کہ کیا براؤزر فائل شیئرنگ سپورٹ کرتا ہے (زیادہ تر موبائل براؤزرز میں کام کرتا ہے)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({
+                    files: [file],
+                    title: 'Rate List',
+                    text: `*Rate List - ${getDate()}*`
+                });
+            } catch (err) {
+                console.error("Sharing failed", err);
+            }
+        } else {
+            // اگر براؤزر سپورٹ نہ کرے تو پرانا طریقہ (ڈاؤن لوڈ اور لنک) استعمال کریں
+            let a = document.createElement("a");
+            a.href = canvas.toDataURL("image/png");
+            a.download = `Rates_${getDate()}.png`;
+            a.click();
+            window.open(`https://wa.me/?text=${encodeURIComponent("*Rate List - " + getDate() + "*")}`);
+            alert("براؤزر براہ راست شیئر سپورٹ نہیں کرتا۔ تصویر ڈاؤن لوڈ کر دی گئی ہے، اب آپ واٹس ایپ پر مینوئل اٹیچ کر سکتے ہیں۔");
+        }
+    }, 500);
+}
+
+function exportData() {
+    let blob = new Blob([JSON.stringify(fullDB)], { type: "application/json" });
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "rate_backup.json";
+    a.click();
+}
+
+function importData(e) {
+    let file = e.files[0];
+    let reader = new FileReader();
+    reader.onload = function () {
+        fullDB = JSON.parse(reader.result);
+        localStorage.setItem("rateDB", JSON.stringify(fullDB));
+        loadDates();
+        loadData();
+        alert("Backup Imported Successfully!");
+    };
+    reader.readAsText(file);
+}
+
+init();
+</script>
+</body>
+</html>
