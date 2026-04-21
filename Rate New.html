@@ -141,6 +141,9 @@ header button:not(.btn):active {
     cursor: pointer;
 }
 
+
+
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .factory-grid { grid-template-columns: 1fr; }
@@ -210,6 +213,9 @@ transition:0.2s;
     </div>
 
     <div class="button-bank">
+          <button onclick="toggleAddSection()" class="btn btn-blue">
+           ➕ Add Factory & Rate
+        </button>
         <button class="btn btn-save" onclick="saveData()">Save & Backup</button>
         <button class="btn btn-blue" onclick="exportSelected()">Image</button>
         <button class="btn btn-blue" onclick="downloadPDF()">PDF</button>
@@ -246,7 +252,10 @@ async function init() {
         inputRow.querySelectorAll('input[type="text"], input[type="number"]').forEach(inp => inp.style.display = 'none');
     }
 
-    let today = new Date().toISOString().split('T')[0];
+    let now = new Date();
+    let today = now.getFullYear() + '-' + 
+                String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(now.getDate()).padStart(2, '0');
     entryDate.value = today;
     loadDates();
     loadData();
@@ -262,22 +271,73 @@ async function init() {
             loadData();
         }
     } catch (e) { console.log("Cloud offline."); }
+    // ✅ YE LINE ADD KI HAI (LAST MEIN)
+    setTimeout(() => {
+        loadOldData();
+    }, 300);
 }
 
 function getDate() { return entryDate.value; }
 
 function loadData() {
     let d = getDate();
+    
+    // 1. چیک کریں کہ کیا اس تاریخ کا ڈیٹا موجود ہے
     if (fullDB[d]) {
-        db = fullDB[d];
+        // اگر موجود ہے تو اسے لوڈ کریں
+        db = JSON.parse(JSON.stringify(fullDB[d])); // deep copy تاکہ اصل ڈیٹا خراب نہ ہو
     } else {
+        // 2. اگر موجود نہیں ہے تو نیا ٹیمپلیٹ بنائیں
         db = defaultFactories.map(f => ({
             name: f,
             items: defaultItems.map(i => ({ name: i, rate: 0 }))
         }));
     }
+    
+    // 3. سکرین پر دکھائیں
     render();
 }
+
+
+
+function toggleAddSection() {
+
+    let elements = [
+         "entryDate",
+        "newFactoryName",
+        "factorySelect",
+        "newItemName",
+        "newItemRate"
+    ];
+
+    // buttons ko bhi select karo
+    let buttons = document.querySelectorAll(".input-row button, .btn-save");
+
+    elements.forEach(id => {
+        let el = document.getElementById(id);
+        if (el.style.display === "none") {
+            el.style.display = "";
+        } else {
+            el.style.display = "none";
+        }
+    });
+
+    // buttons toggle
+    buttons.forEach(btn => {
+        if (btn.innerText.includes("Factory") || btn.innerText.includes("Item") || btn.innerText.includes("Save")) {
+            if (btn.style.display === "none") {
+                btn.style.display = "";
+            } else {
+                btn.style.display = "none";
+            }
+        }
+    });
+}
+
+
+
+
+
 
 function render() {
     const auth = sessionStorage.getItem('userAuth');
@@ -337,7 +397,18 @@ async function saveData() {
 
 function loadDates() {
     dateSelector.innerHTML = "";
-    Object.keys(fullDB).forEach(d => { dateSelector.innerHTML += `<option>${d}</option>`; });
+
+   let dates = Object.keys(fullDB).sort().reverse(); // latest first
+
+    dates.forEach(d => {
+        dateSelector.innerHTML += `<option>${d}</option>`;
+    });
+
+    // latest date auto select
+    if (dates.length > 0) {
+        dateSelector.value = dates[0];
+        entryDate.value = dates[0];
+    }
 }
 
 function loadOldData() { entryDate.value = dateSelector.value; loadData(); }
